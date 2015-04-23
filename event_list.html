@@ -1,0 +1,134 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="cache-control" content="max-age=0" />
+  <meta http-equiv="cache-control" content="no-cache" />  
+  <meta http-equiv="expires" content="0" />
+  <meta http-equiv="expires" content="Tue, 01 Jan 1980 1:00:00 GMT" />
+  <meta http-equiv="pragma" content="no-cache" />
+  
+  <title>AcademyApp</title>
+  <meta name="description" content="AcademyApp">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+  <script type="text/javascript" src="https://www.parsecdn.com/js/parse-1.3.1.min.js"></script>
+</head>
+
+<body>
+    <div class="row">
+      <div>
+        <a href="signup.html">SIGN-UP</a>
+        <a href="signin.html">SIGN-IN</a>
+        <a href="createClass.html">CREATE_EVENT</a>
+        <a href="event_list.html">EVENT_LIST</a>
+        <a href="editMember.html">MEMBER_EDIT</a>
+      </div>
+  </div>
+  <hr/> 
+
+  <div id="main">
+
+    <h1>The Way Taekwondo - FBCO</h1>
+    <h3>Event Member List</h3>
+
+    <div class="row">
+      Date: <input type="date" id="txtDate"/><button onclick="findEventsForDay()">SEARCH</button>
+    </div>
+    <div>
+      <table id="eventTable" border=1></table>
+    </div>
+    <br/><br/>
+    <div>
+      <table id="memberListTable" border=1></table>
+    </div>
+  </div>
+</body>
+<script type="text/javascript" src="js/date.js"></script>
+<script src="js/setnow.jquery.js"></script>
+  <script type="text/javascript">
+  Parse.initialize("qhJKJHGivO5op9dvRGxYXNr7Xjx3ru3hpDKXw9G0", "Xyov0zQSe7syEvlMgkUdUmKlQ1S9eQcq485MEqaG");
+  var todayClassesMap = {};
+  var participantList = {}; 
+  var now = new Date();
+  var day = ("0" + now.getDate()).slice(-2);
+  var month = ("0" + (now.getMonth() + 1)).slice(-2);
+  var today = now.getFullYear()+"-"+(month)+"-"+(day) ;
+  $("#txtDate").val(today);
+
+  function findEventsForDay(){
+
+      var year = $("#txtDate").val().slice(0,4);
+      var month = $("#txtDate").val().slice(5,7);
+      var day = $("#txtDate").val().slice(8,13);
+      var startRange = new Date(year, month - 1, day, 0, 0, 0);
+      var endRange = new Date(year, month - 1, day, 23, 0, 0);
+
+      var Event = Parse.Object.extend("Event");
+      var query = new Parse.Query(Event);
+      query.greaterThan("date", startRange);
+      query.lessThan("date", endRange);
+      
+      $("#eventTable").empty();
+      $("#memberListTable").empty();
+
+      // query.equalTo("date", dateToSearch);
+      query.find({
+        success: function(results){
+          todayClasses = results;
+          if(results.length == 0){
+            $.notify("No event registered", "info");
+          }else{
+            $("#eventTable").append("<tr><th>Type</th><th>Hours</th><th>Location</th><th>Members</th></tr>");
+            for(var x = 0; x < results.length; x++){
+              todayClassesMap[results[x].id] = results[x];
+              var rowDisplay = "<tr><td>" + results[x].get("Type") + "</td><td> " + results[x].get("hours") + "</td><td> " + results[x].get("location") + "</td><td><a href='#' onclick='getListOfMemberOnEvent(\"" + results[x].id + "\"); return false;'>List</a></td></tr>";
+              $("#eventTable").append(rowDisplay);
+            }
+            
+          }
+        },
+        error: function(error){
+          alert("fail");
+        }
+      });
+  }  
+
+  function getListOfMemberOnEvent(eventId){
+    $("#memberListTable").empty();
+    $("#memberListTable").append("<tr><th>Count</th><th>Firstname</th><th>Lastname</th><th>Belt</th><th>Profile</th></tr>");
+    var event = todayClassesMap[eventId];
+    var Visit = Parse.Object.extend("Visit");
+    var query = new Parse.Query(Visit);
+    query.equalTo("event", event);
+    query.find({
+      success: function(results) {
+        for (var i = 0; i < results.length; i++) { 
+          var tt = results[i].get('member');
+          var data = "<tr><td>" + (i+1) + "</td><td>" + results[i].get('firstname') + "</td><td>" + results[i].get('lastname') + "</td><td>" + results[i].get('belt') + "</td><td><a href='viewMemberDetails.html?memId="+ results[i].get('member').id +"'>View</a></td></tr>";
+          $("#memberListTable").append(data);
+        }              
+      },
+      error: function(error) {
+        alert("Error: " + error.code + " " + error.message);
+      }
+    });
+  }
+
+
+  function logout(){
+    Parse.User.logOut();
+  }
+
+  var currentUser = Parse.User.current();
+  if (!currentUser) {
+    window.location.href = "index.html"
+  }else{
+    findEventsForDay();
+  }
+  </script>
+  <script src="js/bootstrap.min.js"></script>
+  <script src="js/jquery-2.1.0.min.js"></script>
+  <script src="js/notify.min.js"></script>
