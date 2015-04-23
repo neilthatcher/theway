@@ -1,0 +1,45 @@
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+  <script type="text/javascript" src="https://www.parsecdn.com/js/parse-1.3.1.min.js"></script>
+  <script src="js/setnow.jquery.js"></script>
+
+<script>
+Parse.initialize("qhJKJHGivO5op9dvRGxYXNr7Xjx3ru3hpDKXw9G0", "Xyov0zQSe7syEvlMgkUdUmKlQ1S9eQcq485MEqaG");
+
+function begin(){
+	var Visit = Parse.Object.extend("Visit");
+	var query = new Parse.Query(Visit);
+	query.greaterThan("visitDate", new Date(2014, 03, 20));
+    query.find({
+        success: function(results){
+          if(results.length > 0){
+            for(var x = 0; x < results.length; x++){
+              // register visit using the memberId+eventId as hashkey for easy retrieval
+              var event = results[x].get("event");
+              var EventRec = Parse.Object.extend("Event");
+              var query2 = new Parse.Query(EventRec);
+              query.equalTo("ObjectId", event);
+              query.find({
+              	success: function(results){
+              		println(results.length);
+              	},
+              	error: function(err){
+              		Console.log(err.message);
+              	}
+              });
+
+              var visitLine = "<tr><td>" + results[x].get("firstname") + "</td><td>" + results[x].get("lastname") + "</td><td>" + results[x].get("event") + "</td><td>" + results[x].get("belt") + "</td><td>" + results[x].get("hours") + "</td>";
+          		$("#report").append(visitLine);
+            	Console.log(results[x].get("firstname") + "," + results[x].get("lastname") + "," + results[x].get("visitDate") + "," + results[x].get("belt") + "," + results[x].get("hours") + "\n");
+            }
+          }
+        },
+        error: function(error){
+          alert("fail" + error.message);
+        }
+    });
+
+}
+
+begin();
+
+</script>
